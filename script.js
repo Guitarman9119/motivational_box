@@ -1,49 +1,55 @@
-// Fetch the JSON data
-fetch('db.json')
-  .then(response => response.json())
-  .then(data => {
-    const tasks = Object.keys(data['2023/7/4']);
+function processTasks() {
+  return fetch('db.json')
+    .then(response => response.json())
+    .then(tasks => {
+      const taskArrays = {
+        'Task 1': new Array(365).fill(0),
+        'Task 2': new Array(365).fill(0),
+        'Task 3': new Array(365).fill(0),
+        'Task 4': new Array(365).fill(0),
+        'Task 5': new Array(365).fill(0)
+      };
 
-    tasks.forEach(task => {
-      const squares = document.createElement('ul');
-      squares.classList.add('squares');
+      for (const date in tasks) {
+        const currentDate = new Date(date);
+        const dayOfYear = getDayOfYear(currentDate);
 
-      const graphContainer = document.createElement('div');
-      graphContainer.classList.add('graph');
-
-      const heading = document.createElement('h2');
-      heading.textContent = task;
-      graphContainer.appendChild(heading);
-
-      graphContainer.appendChild(squares);
-
-      document.body.appendChild(graphContainer);
-
-      // Iterate over the dates from July 4, 2023, to July 4, 2024
-      const startDate = new Date('2023-07-04');
-      const endDate = new Date('2024-07-04');
-      const currentDate = new Date(startDate);
-
-      while (currentDate <= endDate) {
-        const dateKey = currentDate.toLocaleDateString('en-US', { year: 'numeric', month: 'numeric', day: 'numeric' });
-        const tasksForDate = data[dateKey] || {};
-        const taskStatus = tasksForDate[task];
-        const isCompleted = taskStatus === true;
-
-        // Set the color level based on task completion
-        let level = 0;
-        if (isCompleted) {
-          level = 3; // Completed (green block)
-        } else if (taskStatus !== undefined) {
-          level = 1; // Incomplete (red block)
-        } else {
-          level = 0; // Future date (gray block)
+        for (const task in tasks[date]) {
+          if (taskArrays.hasOwnProperty(task) && tasks[date][task]) {
+            taskArrays[task][dayOfYear] = 3;
+          }
         }
-
-        squares.insertAdjacentHTML('beforeend', `<li data-level="${level}"></li>`);
-
-        // Move to the next day
-        currentDate.setDate(currentDate.getDate() + 1);
       }
+
+      return taskArrays;
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      return {};
     });
+}
+
+// Helper function to get the day of the year
+function getDayOfYear(date) {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+}
+
+// Usage example
+processTasks()
+  .then(taskArrays => {
+    for (const task in taskArrays) {
+      const squares = document.querySelector(`.squares.${task.toLowerCase().replace(' ', '')}`);
+      const taskArray = taskArrays[task];
+      
+      for (let i = 1; i < taskArray.length; i++) {
+        const level = taskArray[i];
+        squares.insertAdjacentHTML('beforeend', `<li data-level="${level}"></li>`);
+      }
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
   });
