@@ -1,5 +1,5 @@
 function processTasks() {
-  return fetch('db.json')
+  return fetch('static/db.json')
     .then(response => response.json())
     .then(tasks => {
       const taskArrays = {
